@@ -3,9 +3,6 @@
 	<a href="https://travis-ci.org/LPGhatguy/rojo-plugin">
 		<img src="https://api.travis-ci.org/LPGhatguy/rojo-plugin.svg?branch=master" alt="Travis-CI Build Status" />
 	</a>
-	<a href="https://coveralls.io/github/LPGhatguy/rojo-plugin">
-		<img src="https://coveralls.io/repos/github/LPGhatguy/rojo-plugin/badge.svg?branch=master" alt="Coveralls Coverage Status" />
-	</a>
 </div>
 
 <div>&nbsp;</div>
