@@ -1,7 +1,7 @@
 # Rojo Studio Plugin Change Log
 
 ## Current Master
-* *No changes*
+* Fixed minor bug with `.lua` appearing anywhere except the end of a file
 
 ## 0.3.0
 * Factored out the plugin into a separate repository

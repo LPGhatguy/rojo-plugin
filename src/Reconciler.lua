@@ -50,7 +50,7 @@ local function itemToName(item, fileName)
 			return fileName:match("^(.-)%.server%.lua$"), "Script"
 		elseif fileName:find("%.client%.lua$") then
 			return fileName:match("^(.-)%.client%.lua$"), "LocalScript"
-		elseif fileName:find("%.lua") then
+		elseif fileName:find("%.lua$") then
 			return fileName:match("^(.-)%.lua$"), "ModuleScript"
 		else
 			return fileName, "StringValue"
