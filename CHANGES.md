@@ -3,7 +3,7 @@
 ## Current Master
 * Fixed minor bug with `.lua` appearing anywhere except the end of a file
 * Added a detailed error message in the console if there's a protocol version mismatch between the dev plugin and server.
-* Increased polling interval from 300ms to 200ms -- this should be a safe change.
+* Reduced polling interval from 300ms to 200ms -- this should be a safe change.
 	* In the future, long polling is a much better idea, but Roblox's HTTP interface is limited.
 
 ## 0.3.0
