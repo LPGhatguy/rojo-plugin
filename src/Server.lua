@@ -1,5 +1,8 @@
 local HttpService = game:GetService("HttpService")
 
+local Config = require(script.Parent.Config)
+local Promise = require(script.Parent.Promise)
+
 local Server = {}
 Server.__index = Server
 
@@ -26,6 +29,21 @@ end
 function Server:_start()
 	return self:getInfo()
 		:andThen(function(response)
+			if response.protocolVersion ~= Config.protocolVersion then
+				local message = (
+					"Found a Rojo dev server, but it's using a different protocl version, and is incompatible." ..
+					"\nMake sure you have the most up-to-date version of both the Rojo plugin and server!" ..
+					"\n\nYour client is version %s, with protocol version %s." ..
+					"\nYour server is version %s, with protocol version %s." ..
+					"\n\nGo to https://github.com/LPGhatguy/rojo for more details."
+				):format(
+					Config.version, Config.protocolVersion,
+					response.serverVersion, response.protocolVersion
+				)
+
+				return Promise.reject(message)
+			end
+
 			self.serverId = response.serverId
 			self.currentTime = response.currentTime
 

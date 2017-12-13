@@ -2,6 +2,7 @@
 
 ## Current Master
 * Fixed minor bug with `.lua` appearing anywhere except the end of a file
+* Added a detailed error message in the console if there's a protocol version mismatch between the dev plugin and server.
 
 ## 0.3.0
 * Factored out the plugin into a separate repository
