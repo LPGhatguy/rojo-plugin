@@ -9,7 +9,9 @@
 
 Rojo is a flexible multi-tool designed for creating robust Roblox projects. It's in early development, but is still useful for many projects.
 
-This is the repository containing the Roblox Studio plugin only. For more details, check out [the root Rojo repository](https://github.com/LPGhatguy/rojo).
+This is the repository containing the Roblox Studio plugin only.
+
+For more details, and to file issues, go to [the main Rojo repository](https://github.com/LPGhatguy/rojo).
 
 ## License
 Rojo is available under the terms of the MIT license. See [LICENSE.md](LICENSE.md) for details.
