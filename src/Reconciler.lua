@@ -243,6 +243,21 @@ function Reconciler.reconcile(rbx, item, fileName, parent)
 	end
 end
 
+local function reify2(item)
+	local instance = Instance.new(item.className)
+	instance.Name = item.name
+
+	for key, value in pairs(item.properties) do
+		instance[key] = value.value
+	end
+
+	for _, child in pairs(item.children) do
+		reify2(child).Parent = instance
+	end
+
+	return instance
+end
+
 function Reconciler.reconcileRoute(route, item)
 	local location = game
 
@@ -259,11 +274,15 @@ function Reconciler.reconcileRoute(route, item)
 		location = newLocation
 	end
 
-	local fileName = route[#route]
-
-	local name = itemToName(item, fileName)
+	local name = item.name
 	local rbx = location:FindFirstChild(name)
-	Reconciler.reconcile(rbx, item, fileName, location)
+
+	if rbx then
+		rbx:Destroy()
+	end
+
+	rbx = reify2(item)
+	rbx.Parent = location
 end
 
 return Reconciler
