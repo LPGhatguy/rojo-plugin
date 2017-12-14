@@ -112,14 +112,19 @@ function Reconciler.reconcileRoute(route, item)
 		location = newLocation
 	end
 
+	-- Should this name be item.name or route[#route]?
+	-- Neither! Need to rework protocol perhaps?
 	local name = item.name
 	local rbx = location:FindFirstChild(name)
 
 	rbx = Reconciler.reconcile(rbx, item)
 
 	if rbx then
+		rbx.Name = name
 		rbx.Parent = location
 	end
+
+	return rbx
 end
 
 return Reconciler
