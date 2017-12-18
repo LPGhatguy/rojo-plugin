@@ -27,8 +27,8 @@ function Reconciler._reify(item)
 	local rbx = Instance.new(item.className)
 	rbx.Name = item.name
 
-	for key, value in pairs(item.properties) do
-		item[key] = value
+	for key, property in pairs(item.properties) do
+		rbx[key] = property.value
 	end
 
 	for _, child in ipairs(item.children) do
@@ -88,8 +88,8 @@ function Reconciler.reconcile(rbx, item)
 	end
 
 	-- Apply all properties, Roblox will de-duplicate changes
-	for key, value in pairs(item.properties) do
-		item[key] = value
+	for key, property in pairs(item.properties) do
+		rbx[key] = property.value
 	end
 
 	-- Use a smart algorithm for reconciling children
