@@ -1,8 +1,8 @@
 # Rojo Studio Plugin Change Log
 
-## Current Master
+## Current Master (0.4.0)
 * Implemented protocol version 1, which shifts more responsibility onto the server
-	* This is a **breaking** change!
+	* This is a **major breaking** change!
 
 ## 0.3.1
 * Fixed minor bug with `.lua` appearing anywhere except the end of a file
