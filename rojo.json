@@ -24,7 +24,7 @@
     },
     "testservice": {
       "path": "testservice",
-      "target": "TestService.Rojo"
+      "target": "TestService"
     }
   }
 }
