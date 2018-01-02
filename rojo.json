@@ -4,7 +4,7 @@
   "partitions": {
     "plugin": {
       "path": "src",
-      "target": "ReplicatedStorage.Rojo"
+      "target": "ReplicatedStorage.Rojo.plugin"
     },
     "modules/roact": {
       "path": "modules/roact/lib",
