@@ -56,7 +56,7 @@ function Reconciler._reconcileChildren(rbx, item)
 		local hash = childItem.name .. "-" .. childItem.className
 
 		if not visited[hash] then
-			local childRbx = findRbxChild(item, childItem.name, childItem.className)
+			local childRbx = findRbxChild(rbx, childItem.name, childItem.className)
 
 			Reconciler.reconcile(childRbx, childItem)
 
