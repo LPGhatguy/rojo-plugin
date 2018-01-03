@@ -127,7 +127,7 @@ function Plugin:_pull(server, project, routes)
 			end
 		end
 
-		Reconciler.reconcileRoute(fullRoute, item)
+		Reconciler.reconcileRoute(fullRoute, item, routes[index])
 	end
 end
 

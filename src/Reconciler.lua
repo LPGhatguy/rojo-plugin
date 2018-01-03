@@ -1,5 +1,25 @@
 local Reconciler = {}
 
+-- Map of routes (concatenated with /) to Roblox instances
+Reconciler.index = {}
+Reconciler.reverseIndex = {}
+
+local function addIndex(rbx, route)
+	local formatted = table.concat(route, "/")
+	Reconciler.index[formatted] = rbx
+	Reconciler.reverseIndex[rbx] = formatted
+end
+
+local function destroy(rbx)
+	local route = Reconciler.reverseIndex[rbx]
+
+	if route then
+		Reconciler.index[route] = nil
+	end
+
+	rbx:Destroy()
+end
+
 --[[
 	Finds the next child in the given item descriptor with the given name and
 	className that isn't in the 'visited' set yet.
@@ -44,6 +64,10 @@ function Reconciler._reify(item)
 		Reconciler._reify(child).Parent = rbx
 	end
 
+	if item.route then
+		addIndex(rbx, item.route)
+	end
+
 	return rbx
 end
 
@@ -75,6 +99,11 @@ function Reconciler._reconcileChildren(rbx, item)
 	for _, childItem in ipairs(item.children) do
 		if not visitedItems[childItem] then
 			local childRbx = findNextRbxChild(rbx, childItem.name, childItem.className, visitedRbx)
+
+			if not childRbx and childItem.route then
+				childRbx = Reconciler.index[table.concat(childItem.route, "/")]
+			end
+
 			local newChildRbx = Reconciler.reconcile(childRbx, childItem)
 
 			if newChildRbx then
@@ -97,7 +126,7 @@ function Reconciler.reconcile(rbx, item)
 	-- Item was deleted
 	if not item then
 		if rbx then
-			rbx:Destroy()
+			destroy(rbx)
 		end
 
 		return
@@ -110,7 +139,7 @@ function Reconciler.reconcile(rbx, item)
 
 	-- Item changed type
 	if rbx.ClassName ~= item.className then
-		rbx:Destroy()
+		destroy(rbx)
 
 		return Reconciler._reify(item)
 	end
@@ -129,7 +158,7 @@ function Reconciler.reconcile(rbx, item)
 	return rbx
 end
 
-function Reconciler.reconcileRoute(route, item)
+function Reconciler.reconcileRoute(route, item, blehRoute)
 	print("Reconcile route", unpack(route))
 	print("\twith", item)
 
@@ -155,6 +184,10 @@ function Reconciler.reconcileRoute(route, item)
 		rbx = location:FindFirstChild(item.name)
 	else
 		rbx = location:FindFirstChild(route[#route])
+	end
+
+	if not rbx and blehRoute then
+		rbx = Reconciler.index[table.concat(blehRoute, "/")]
 	end
 
 	rbx = Reconciler.reconcile(rbx, item)
