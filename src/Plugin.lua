@@ -117,6 +117,16 @@ function Plugin:_pull(server, project, routes)
 			table.insert(fullRoute, routes[index][i])
 		end
 
+		-- If the route's length was 1, we need to rename the object to line up
+		-- with the partition's root object name.
+		-- This is a HACK!
+		if #route == 1 then
+			if item then
+				local objectName = partition.target:match("[^.]+$")
+				item.name = objectName
+			end
+		end
+
 		Reconciler.reconcileRoute(fullRoute, item)
 	end
 end
@@ -140,13 +150,15 @@ function Plugin:startPolling()
 			while self._polling do
 				local changes = server:getChanges():await()
 
-				local routes = {}
+				if #changes > 0 then
+					local routes = {}
 
-				for _, change in ipairs(changes) do
-					table.insert(routes, change.route)
+					for _, change in ipairs(changes) do
+						table.insert(routes, change.route)
+					end
+
+					self:_pull(server, project, routes)
 				end
-
-				self:_pull(server, project, routes)
 
 				wait(Config.pollingRate)
 			end

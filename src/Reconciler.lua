@@ -1,18 +1,12 @@
 local Reconciler = {}
 
-local function findChild(item, name, className)
+--[[
+	Finds the next child in the given item descriptor with the given name and
+	className that isn't in the 'visited' set yet.
+]]
+local function findNextItemChild(item, name, className, visited)
 	for _, child in ipairs(item.children) do
-		if child.name == name and child.className == className then
-			return child
-		end
-	end
-
-	return nil
-end
-
-local function findRbxChild(rbx, name, className)
-	for _, child in ipairs(rbx:GetChildren()) do
-		if child.Name == name and child.ClassName == className then
+		if child.name == name and child.className == className and not visited[child] then
 			return child
 		end
 	end
@@ -21,7 +15,22 @@ local function findRbxChild(rbx, name, className)
 end
 
 --[[
-	Construct a new Roblox instance tree that corresponds to the given VFS item.
+	Find the next child in the given Roblox instance with the given Name and
+	ClassName that isn't in the 'visited' set yet.
+]]
+local function findNextRbxChild(rbx, name, className, visited)
+	for _, child in ipairs(rbx:GetChildren()) do
+		if child.Name == name and child.ClassName == className and not visited[child] then
+			return child
+		end
+	end
+
+	return nil
+end
+
+--[[
+	Construct a new Roblox instance tree that corresponds to the given item
+	definition.
 ]]
 function Reconciler._reify(item)
 	local rbx = Instance.new(item.className)
@@ -38,33 +47,52 @@ function Reconciler._reify(item)
 	return rbx
 end
 
+--[[
+	Reconcile the children of the given item definition and the given Roblox
+	instance.
+]]
 function Reconciler._reconcileChildren(rbx, item)
-	-- Set containing visited names of the form `name-className`
-	local visited = {}
+	-- Sets containing visited item descriptions and Roblox instances
+	local visitedItems = {}
+	local visitedRbx = {}
 
 	-- Find existing children that have been updated or deleted
 	for _, childRbx in ipairs(rbx:GetChildren()) do
-		local childItem = findChild(item, childRbx.Name, childRbx.ClassName)
+		local childItem = findNextItemChild(item, childRbx.Name, childRbx.ClassName, visitedItems)
+		local newChildRbx = Reconciler.reconcile(childRbx, childItem)
 
-		Reconciler.reconcile(childRbx, childItem)
+		if childItem then
+			visitedItems[childItem] = true
+		end
 
-		visited[childRbx.Name .. "-" .. childRbx.ClassName] = true
+		if newChildRbx then
+			newChildRbx.Parent = rbx
+			visitedRbx[childRbx] = true
+		end
 	end
 
 	-- Find children that have been added
 	for _, childItem in ipairs(item.children) do
-		local hash = childItem.name .. "-" .. childItem.className
+		if not visitedItems[childItem] then
+			local childRbx = findNextRbxChild(rbx, childItem.name, childItem.className, visitedRbx)
+			local newChildRbx = Reconciler.reconcile(childRbx, childItem)
 
-		if not visited[hash] then
-			local childRbx = findRbxChild(rbx, childItem.name, childItem.className)
+			if newChildRbx then
+				newChildRbx.Parent = rbx
+				visitedRbx[newChildRbx] = true
+			end
 
-			Reconciler.reconcile(childRbx, childItem)
-
-			visited[hash] = true
+			visitedItems[childItem] = true
 		end
 	end
 end
 
+--[[
+	Reconcile the given item definition and Roblox object.
+
+	Both arguments can be nil, which indicates either the addition of a new
+	instance (rbx is nil) or the deletion of an existing instance (item is nil).
+]]
 function Reconciler.reconcile(rbx, item)
 	-- Item was deleted
 	if not item then
@@ -89,14 +117,22 @@ function Reconciler.reconcile(rbx, item)
 
 	-- Apply all properties, Roblox will de-duplicate changes
 	for key, property in pairs(item.properties) do
+		-- TODO: Transform property value based on property.type
+		-- Right now, we assume that 'value' is primitive
+
 		rbx[key] = property.value
 	end
 
 	-- Use a smart algorithm for reconciling children
 	Reconciler._reconcileChildren(rbx, item)
+
+	return rbx
 end
 
 function Reconciler.reconcileRoute(route, item)
+	print("Reconcile route", unpack(route))
+	print("\twith", item)
+
 	local location = game
 
 	for i = 1, #route - 1 do
@@ -104,6 +140,8 @@ function Reconciler.reconcileRoute(route, item)
 		local newLocation = location:FindFirstChild(piece)
 
 		if not newLocation then
+			-- TODO: Use GetService first if location is game!
+
 			newLocation = Instance.new("Folder")
 			newLocation.Name = piece
 			newLocation.Parent = location
@@ -112,15 +150,16 @@ function Reconciler.reconcileRoute(route, item)
 		location = newLocation
 	end
 
-	-- Should this name be item.name or route[#route]?
-	-- Neither! Need to rework protocol perhaps?
-	local name = item.name
-	local rbx = location:FindFirstChild(name)
+	local rbx
+	if item then
+		rbx = location:FindFirstChild(item.name)
+	else
+		rbx = location:FindFirstChild(route[#route])
+	end
 
 	rbx = Reconciler.reconcile(rbx, item)
 
 	if rbx then
-		rbx.Name = name
 		rbx.Parent = location
 	end
 
