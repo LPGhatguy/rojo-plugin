@@ -22,8 +22,8 @@
       "path": "modules/testez/lib",
       "target": "ReplicatedStorage.TestEZ"
     },
-    "testservice": {
-      "path": "testservice",
+    "tests": {
+      "path": "tests",
       "target": "TestService"
     }
   }
