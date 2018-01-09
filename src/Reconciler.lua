@@ -1,4 +1,4 @@
-local Reconciler = {}
+local RouteMap = require(script.Parent.RouteMap)
 
 --[[
 	Finds the next child in the given item descriptor with the given name and
@@ -28,11 +28,24 @@ local function findNextRbxChild(rbx, name, className, visited)
 	return nil
 end
 
+local Reconciler = {}
+Reconciler.__index = Reconciler
+
+function Reconciler.new()
+	local self = {
+		routeMap = RouteMap.new(),
+	}
+
+	setmetatable(self, Reconciler)
+
+	return self
+end
+
 --[[
 	Construct a new Roblox instance tree that corresponds to the given item
 	definition.
 ]]
-function Reconciler._reify(item)
+function Reconciler:_reify(item)
 	local rbx = Instance.new(item.className)
 	rbx.Name = item.name
 
@@ -41,7 +54,12 @@ function Reconciler._reify(item)
 	end
 
 	for _, child in ipairs(item.children) do
-		Reconciler._reify(child).Parent = rbx
+		self:_reify(child).Parent = rbx
+	end
+
+	-- If the object is directly associated with a file, store its route!
+	if item.route then
+		self.routeMap:insert(item.route, rbx)
 	end
 
 	return rbx
@@ -51,7 +69,7 @@ end
 	Reconcile the children of the given item definition and the given Roblox
 	instance.
 ]]
-function Reconciler._reconcileChildren(rbx, item)
+function Reconciler:_reconcileChildren(rbx, item)
 	-- Sets containing visited item descriptions and Roblox instances
 	local visitedItems = {}
 	local visitedRbx = {}
@@ -59,7 +77,7 @@ function Reconciler._reconcileChildren(rbx, item)
 	-- Find existing children that have been updated or deleted
 	for _, childRbx in ipairs(rbx:GetChildren()) do
 		local childItem = findNextItemChild(item, childRbx.Name, childRbx.ClassName, visitedItems)
-		local newChildRbx = Reconciler.reconcile(childRbx, childItem)
+		local newChildRbx = self:reconcile(childRbx, childItem)
 
 		if childItem then
 			visitedItems[childItem] = true
@@ -75,7 +93,7 @@ function Reconciler._reconcileChildren(rbx, item)
 	for _, childItem in ipairs(item.children) do
 		if not visitedItems[childItem] then
 			local childRbx = findNextRbxChild(rbx, childItem.name, childItem.className, visitedRbx)
-			local newChildRbx = Reconciler.reconcile(childRbx, childItem)
+			local newChildRbx = self:reconcile(childRbx, childItem)
 
 			if newChildRbx then
 				newChildRbx.Parent = rbx
@@ -93,10 +111,11 @@ end
 	Both arguments can be nil, which indicates either the addition of a new
 	instance (rbx is nil) or the deletion of an existing instance (item is nil).
 ]]
-function Reconciler.reconcile(rbx, item)
+function Reconciler:reconcile(rbx, item)
 	-- Item was deleted
 	if not item then
 		if rbx then
+			self.routeMap:removeByRbx(rbx)
 			rbx:Destroy()
 		end
 
@@ -105,59 +124,94 @@ function Reconciler.reconcile(rbx, item)
 
 	-- Item was created
 	if not rbx then
-		return Reconciler._reify(item)
+		return self:_reify(item)
 	end
 
 	-- Item changed type
 	if rbx.ClassName ~= item.className then
+		-- TODO: Use a comparison that makes services and folders equate as the
+		-- same type.
+		self.routeMap:removeByRbx(rbx)
 		rbx:Destroy()
 
-		return Reconciler._reify(item)
+		return self:_reify(item)
 	end
 
 	-- Apply all properties, Roblox will de-duplicate changes
 	for key, property in pairs(item.properties) do
 		-- TODO: Transform property value based on property.type
-		-- Right now, we assume that 'value' is primitive
+		-- Right now, we assume that 'value' is primitive!
 
 		rbx[key] = property.value
 	end
 
 	-- Use a smart algorithm for reconciling children
-	Reconciler._reconcileChildren(rbx, item)
+	self:_reconcileChildren(rbx, item)
 
 	return rbx
 end
 
-function Reconciler.reconcileRoute(route, item)
-	print("Reconcile route", unpack(route))
-	print("\twith", item)
-
+--[[
+	Reconcile the object specified in the given partition with the given route.
+]]
+function Reconciler:reconcileRoute(partitionRoute, itemRoute, item)
 	local location = game
 
-	for i = 1, #route - 1 do
-		local piece = route[i]
-		local newLocation = location:FindFirstChild(piece)
+	if #itemRoute == 1 then
+		-- We're describing the root object of the partition
+		for i = 1, #partitionRoute - 1 do
+			local piece = partitionRoute[i]
+			local newLocation = location:FindFirstChild(piece)
 
-		if not newLocation then
-			-- TODO: Use GetService first if location is game!
+			if not newLocation then
+				newLocation = Instance.new("Folder")
+				newLocation.Name = piece
+				newLocation.Parent = location
+			end
 
-			newLocation = Instance.new("Folder")
-			newLocation.Name = piece
-			newLocation.Parent = location
+			location = newLocation
+		end
+	else
+		-- We're describing an object within a partition
+		for _, piece in ipairs(partitionRoute) do
+			local newLocation = location:FindFirstChild(piece)
+
+			if not newLocation then
+				newLocation = Instance.new("Folder")
+				newLocation.Name = piece
+				newLocation.Parent = location
+			end
+
+			location = newLocation
 		end
 
-		location = newLocation
+		-- We skip the first element (the partition name, as navigated above) and
+		-- the last element (the instance itself)
+		for i = 2, #itemRoute - 1 do
+			local piece = itemRoute[i]
+			local newLocation = location:FindFirstChild(piece)
+
+			if not newLocation then
+				newLocation = Instance.new("Folder")
+				newLocation.Name = piece
+				newLocation.Parent = location
+			end
+
+			location = newLocation
+		end
 	end
 
+	-- Try to find an existing object either from our current location or from
+	-- the route map.
 	local rbx
 	if item then
 		rbx = location:FindFirstChild(item.name)
 	else
-		rbx = location:FindFirstChild(route[#route])
+		rbx = self.routeMap:get(itemRoute)
 	end
 
-	rbx = Reconciler.reconcile(rbx, item)
+	-- Update an existing object, or create one if it doesn't exist.
+	rbx = self:reconcile(rbx, item)
 
 	if rbx then
 		rbx.Parent = location

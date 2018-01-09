@@ -41,6 +41,8 @@ return function()
 
 	describe("reconcile", function()
 		it("should construct sole instances", function()
+			local reconciler = Reconciler.new()
+
 			local item = {
 				className = "StringValue",
 				name = "Hello",
@@ -53,12 +55,14 @@ return function()
 				children = {},
 			}
 
-			local rbx = Reconciler.reconcile(nil, item)
+			local rbx = reconciler:reconcile(nil, item)
 
 			validateRbx(rbx, item)
 		end)
 
 		it("should construct instances with children", function()
+			local reconciler = Reconciler.new()
+
 			local item = {
 				className = "StringValue",
 				name = "Hello",
@@ -83,12 +87,14 @@ return function()
 				},
 			}
 
-			local rbx = Reconciler.reconcile(nil, item)
+			local rbx = reconciler:reconcile(nil, item)
 
 			validateRbx(rbx, item)
 		end)
 
 		it("should destroy when reconciling across types", function()
+			local reconciler = Reconciler.new()
+
 			local firstItem = {
 				className = "StringValue",
 				name = "Hello",
@@ -115,7 +121,7 @@ return function()
 
 			local container = Instance.new("Folder")
 
-			local firstRbx = Reconciler.reconcile(nil, firstItem)
+			local firstRbx = reconciler:reconcile(nil, firstItem)
 			firstRbx.Parent = container
 
 			validateRbx(firstRbx, firstItem)
@@ -123,7 +129,7 @@ return function()
 			expect(firstRbx.ClassName).to.equal("StringValue")
 			expect(firstRbx.Parent).to.equal(container)
 
-			local secondRbx = Reconciler.reconcile(firstRbx, secondItem)
+			local secondRbx = reconciler:reconcile(firstRbx, secondItem)
 
 			validateRbx(secondRbx, secondItem)
 
@@ -132,6 +138,8 @@ return function()
 		end)
 
 		it("should add and remove children on reconcile", function()
+			local reconciler = Reconciler.new()
+
 			local firstItem = {
 				className = "Folder",
 				name = "Hello",
@@ -166,11 +174,11 @@ return function()
 				},
 			}
 
-			local firstRbx = Reconciler.reconcile(nil, firstItem)
+			local firstRbx = reconciler:reconcile(nil, firstItem)
 
 			validateRbx(firstRbx, firstItem)
 
-			local secondRbx = Reconciler.reconcile(firstRbx, secondItem)
+			local secondRbx = reconciler:reconcile(firstRbx, secondItem)
 
 			validateRbx(secondRbx, secondItem)
 
@@ -178,7 +186,7 @@ return function()
 			expect(secondRbx.Foo).to.equal(firstRbx.Foo)
 			expect(typeof(secondRbx.Bar)).to.equal("Instance")
 
-			local thirdRbx = Reconciler.reconcile(secondRbx, firstItem)
+			local thirdRbx = reconciler:reconcile(secondRbx, firstItem)
 
 			validateRbx(thirdRbx, firstItem)
 
@@ -188,6 +196,8 @@ return function()
 		end)
 
 		it("should add and remove children with same name but different classes", function()
+			local reconciler = Reconciler.new()
+
 			local firstItem = {
 				className = "Folder",
 				name = "Hello",
@@ -222,17 +232,17 @@ return function()
 				},
 			}
 
-			local firstRbx = Reconciler.reconcile(nil, firstItem)
+			local firstRbx = reconciler:reconcile(nil, firstItem)
 
 			validateRbx(firstRbx, firstItem)
 
-			local secondRbx = Reconciler.reconcile(firstRbx, secondItem)
+			local secondRbx = reconciler:reconcile(firstRbx, secondItem)
 
 			validateRbx(secondRbx, secondItem)
 
 			expect(secondRbx).to.equal(firstRbx)
 
-			local thirdRbx = Reconciler.reconcile(secondRbx, firstItem)
+			local thirdRbx = reconciler:reconcile(secondRbx, firstItem)
 
 			validateRbx(thirdRbx, firstItem)
 
@@ -240,6 +250,8 @@ return function()
 		end)
 
 		it("should add and remove children with same name and class", function()
+			local reconciler = Reconciler.new()
+
 			local firstItem = {
 				className = "Folder",
 				name = "Hello",
@@ -274,17 +286,17 @@ return function()
 				},
 			}
 
-			local firstRbx = Reconciler.reconcile(nil, firstItem)
+			local firstRbx = reconciler:reconcile(nil, firstItem)
 
 			validateRbx(firstRbx, firstItem)
 
-			local secondRbx = Reconciler.reconcile(firstRbx, secondItem)
+			local secondRbx = reconciler:reconcile(firstRbx, secondItem)
 
 			validateRbx(secondRbx, secondItem)
 
 			expect(secondRbx).to.equal(firstRbx)
 
-			local thirdRbx = Reconciler.reconcile(secondRbx, firstItem)
+			local thirdRbx = reconciler:reconcile(secondRbx, firstItem)
 
 			validateRbx(thirdRbx, firstItem)
 
@@ -292,6 +304,8 @@ return function()
 		end)
 
 		it("should remove unrelated children", function()
+			local reconciler = Reconciler.new()
+
 			local firstItem = {
 				className = "Folder",
 				name = "Hello",
@@ -320,17 +334,17 @@ return function()
 				},
 			}
 
-			local firstRbx = Reconciler.reconcile(nil, firstItem)
+			local firstRbx = reconciler:reconcile(nil, firstItem)
 
 			validateRbx(firstRbx, firstItem)
 
-			local secondRbx = Reconciler.reconcile(firstRbx, secondItem)
+			local secondRbx = reconciler:reconcile(firstRbx, secondItem)
 
 			validateRbx(secondRbx, secondItem)
 
 			expect(secondRbx).to.equal(firstRbx)
 
-			local thirdRbx = Reconciler.reconcile(secondRbx, firstItem)
+			local thirdRbx = reconciler:reconcile(secondRbx, firstItem)
 
 			validateRbx(thirdRbx, firstItem)
 

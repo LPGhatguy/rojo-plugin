@@ -23,13 +23,14 @@ function Plugin.new()
 
 	local remote = ("http://%s:%d"):format(address, port)
 
-	local foop = {
+	local self = {
 		_http = Http.new(remote),
+		_reconciler = Reconciler.new(),
 		_server = nil,
 		_polling = false,
 	}
 
-	setmetatable(foop, Plugin)
+	setmetatable(self, Plugin)
 
 	do
 		local screenGui = Instance.new("ScreenGui")
@@ -50,10 +51,10 @@ function Plugin.new()
 		label.Position = UDim2.new(0, 0, 0, 0)
 		label.Parent = screenGui
 
-		foop._label = screenGui
+		self._label = screenGui
 	end
 
-	return foop
+	return self
 end
 
 function Plugin:server()
@@ -107,27 +108,25 @@ function Plugin:_pull(server, project, routes)
 	local items = server:read(routes):await()
 
 	for index = 1, #routes do
-		local route = routes[index]
-		local partitionName = route[1]
+		local itemRoute = routes[index]
+		local partitionName = itemRoute[1]
 		local partition = project.partitions[partitionName]
 		local item = items[index]
 
-		local fullRoute = collectMatch(partition.target, "[^.]+")
-		for i = 2, #route do
-			table.insert(fullRoute, routes[index][i])
-		end
+		local partitionRoute = collectMatch(partition.target, "[^.]+")
 
-		-- If the route's length was 1, we need to rename the object to line up
-		-- with the partition's root object name.
+		-- If the item route's length was 1, we need to rename the instance to
+		-- line up with the partition's root object name.
+		--
 		-- This is a HACK!
-		if #route == 1 then
+		if #itemRoute == 1 then
 			if item then
 				local objectName = partition.target:match("[^.]+$")
 				item.name = objectName
 			end
 		end
 
-		Reconciler.reconcileRoute(fullRoute, item)
+		self._reconciler:reconcileRoute(partitionRoute, itemRoute, item)
 	end
 end
 
