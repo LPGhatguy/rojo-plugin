@@ -1,6 +1,36 @@
 local RouteMap = require(script.Parent.RouteMap)
 
 --[[
+	Starting at `location`, navigates down the tree following the given route.
+
+	Creates folders when pieces of the route don't exist.
+]]
+local function navigate(location, route)
+	for _, piece in ipairs(route) do
+		local newLocation = location:FindFirstChild(piece)
+
+		if location == game and not newLocation then
+			-- If we're looking for a child of game, let's try services too!
+			local ok, service = pcall(game.GetService, game, piece)
+
+			if ok then
+				newLocation = service
+			end
+		end
+
+		if not newLocation then
+			newLocation = Instance.new("Folder")
+			newLocation.Name = piece
+			newLocation.Parent = location
+		end
+
+		location = newLocation
+	end
+
+	return location
+end
+
+--[[
 	Finds the next child in the given item descriptor with the given name and
 	className that isn't in the 'visited' set yet.
 ]]
@@ -158,47 +188,23 @@ function Reconciler:reconcileRoute(partitionRoute, itemRoute, item)
 	local location = game
 
 	if #itemRoute == 1 then
-		-- We're describing the root object of the partition
+		local partitionParentRoute = {}
 		for i = 1, #partitionRoute - 1 do
-			local piece = partitionRoute[i]
-			local newLocation = location:FindFirstChild(piece)
-
-			if not newLocation then
-				newLocation = Instance.new("Folder")
-				newLocation.Name = piece
-				newLocation.Parent = location
-			end
-
-			location = newLocation
+			table.insert(partitionParentRoute, partitionRoute[i])
 		end
+
+		location = navigate(location, partitionParentRoute)
 	else
-		-- We're describing an object within a partition
-		for _, piece in ipairs(partitionRoute) do
-			local newLocation = location:FindFirstChild(piece)
-
-			if not newLocation then
-				newLocation = Instance.new("Folder")
-				newLocation.Name = piece
-				newLocation.Parent = location
-			end
-
-			location = newLocation
-		end
+		location = navigate(location, partitionRoute)
 
 		-- We skip the first element (the partition name, as navigated above) and
 		-- the last element (the instance itself)
+		local itemParentRoute = {}
 		for i = 2, #itemRoute - 1 do
-			local piece = itemRoute[i]
-			local newLocation = location:FindFirstChild(piece)
-
-			if not newLocation then
-				newLocation = Instance.new("Folder")
-				newLocation.Name = piece
-				newLocation.Parent = location
-			end
-
-			location = newLocation
+			table.insert(itemParentRoute, itemRoute[i])
 		end
+
+		location = navigate(location, itemParentRoute)
 	end
 
 	-- Try to find an existing object either from our current location or from
