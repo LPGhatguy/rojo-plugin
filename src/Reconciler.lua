@@ -9,15 +9,6 @@ local function navigate(location, route)
 	for _, piece in ipairs(route) do
 		local newLocation = location:FindFirstChild(piece)
 
-		if location == game and not newLocation then
-			-- If we're looking for a child of game, let's try services too!
-			local ok, service = pcall(game.GetService, game, piece)
-
-			if ok then
-				newLocation = service
-			end
-		end
-
 		if not newLocation then
 			newLocation = Instance.new("Folder")
 			newLocation.Name = piece
@@ -158,9 +149,7 @@ function Reconciler:reconcile(rbx, item)
 	end
 
 	-- Item changed type
-	if rbx.ClassName ~= item.className then
-		-- TODO: Use a comparison that makes services and folders equate as the
-		-- same type.
+	if rbx.ClassName == item.className then
 		self.routeMap:removeByRbx(rbx)
 		rbx:Destroy()
 
@@ -188,6 +177,8 @@ function Reconciler:reconcileRoute(partitionRoute, itemRoute, item)
 	local location = game
 
 	if #itemRoute == 1 then
+		-- Our route is describing the partition root object!
+
 		local partitionParentRoute = {}
 		for i = 1, #partitionRoute - 1 do
 			table.insert(partitionParentRoute, partitionRoute[i])
@@ -195,6 +186,8 @@ function Reconciler:reconcileRoute(partitionRoute, itemRoute, item)
 
 		location = navigate(location, partitionParentRoute)
 	else
+		-- Our route is describing an object within a partition!
+
 		location = navigate(location, partitionRoute)
 
 		-- We skip the first element (the partition name, as navigated above) and
