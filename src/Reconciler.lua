@@ -149,7 +149,7 @@ function Reconciler:reconcile(rbx, item)
 	end
 
 	-- Item changed type
-	if rbx.ClassName == item.className then
+	if rbx.ClassName ~= item.className then
 		self.routeMap:removeByRbx(rbx)
 		rbx:Destroy()
 
