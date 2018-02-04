@@ -122,11 +122,20 @@ function Plugin:_pull(server, project, routes)
 		if #itemRoute == 1 then
 			if item then
 				local objectName = partition.target:match("[^.]+$")
-				item.name = objectName
+				item.Name = objectName
 			end
 		end
 
-		self._reconciler:reconcileRoute(partitionRoute, itemRoute, item)
+		local fullRoute = {}
+		for _, piece in ipairs(partitionRoute) do
+			table.insert(fullRoute, piece)
+		end
+
+		for i = 2, #itemRoute do
+			table.insert(fullRoute, itemRoute[i])
+		end
+
+		self._reconciler:reconcileRoute(fullRoute, item, itemRoute)
 	end
 end
 

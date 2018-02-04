@@ -51,6 +51,14 @@ function RouteMap:removeByRbx(rbx)
 	end
 end
 
+function RouteMap:removeRbxDescendants(parentRbx)
+	for rbx in pairs(self._reverseMap) do
+		if rbx:IsDescendantOf(parentRbx) then
+			self:removeByRbx(rbx)
+		end
+	end
+end
+
 function RouteMap:clear()
 	self._map = {}
 	self._reverseMap = {}
