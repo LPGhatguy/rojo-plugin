@@ -3,6 +3,7 @@
 ## Current Master (0.4.0)
 * Implemented protocol version 1, which shifts more responsibility onto the server
 	* This is a **major breaking** change!
+* Implemented brand new reconciler that's better at matching up instances.
 
 ## 0.3.1
 * Fixed minor bug with `.lua` appearing anywhere except the end of a file
