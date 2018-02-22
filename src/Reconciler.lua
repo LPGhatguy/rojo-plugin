@@ -8,6 +8,50 @@ local function classEqual(rbx, className)
 	return rbx.ClassName == className
 end
 
+local function reparent(rbx, parent)
+	if rbx then
+		-- It's possible that 'rbx' is a service or some other object that we
+		-- can't change the parent of. That's the only reason why Parent would
+		-- fail except for rbx being previously destroyed!
+		pcall(function()
+			rbx.Parent = parent
+		end)
+	end
+end
+
+--[[
+	Attempts to match up Roblox instances and object specifiers for
+	reconciliation.
+
+	An object is considered a match if they have the same Name and ClassName.
+
+	primaryChildren and secondaryChildren can each be either a list of Roblox
+	instances or object specifiers. Since they share a common shape, switching
+	the two around isn't problematic!
+
+	visited is expected to be an empty table initially. It will be filled with
+	the set of children that have been visited so far.
+]]
+local function findNextChildPair(primaryChildren, secondaryChildren, visited)
+	for _, primaryChild in ipairs(primaryChildren) do
+		if not visited[primaryChild] then
+			visited[primaryChild] = true
+
+			for _, secondaryChild in ipairs(secondaryChildren) do
+				if primaryChild.ClassName == secondaryChild.ClassName and primaryChild.Name == secondaryChild.Name then
+					visited[secondaryChild] = true
+
+					return primaryChild, secondaryChild
+				end
+			end
+
+			return primaryChild, nil
+		end
+	end
+
+	return nil, nil
+end
+
 local Reconciler = {}
 Reconciler.__index = Reconciler
 
@@ -22,16 +66,33 @@ function Reconciler.new()
 end
 
 --[[
-	An incredibly dumb algorithm to reconcile children: delete all of them and
-	re-create them!
+	A semi-smart algorithm that attempts to apply the given item's children to
+	an existing Roblox object.
 ]]
 function Reconciler:_reconcileChildren(rbx, item)
-	-- Make sure we clean up any straggling route references.
-	self._routeMap:removeRbxDescendants(rbx)
-	rbx:ClearAllChildren()
+	local visited = {}
+	local rbxChildren = rbx:GetChildren()
 
-	for _, child in ipairs(item.Children) do
-		self:_reify(child).Parent = rbx
+	-- Reconcile any children that were added or updated
+	while true do
+		local itemChild, rbxChild = findNextChildPair(item.Children, rbxChildren, visited)
+
+		if not itemChild then
+			break
+		end
+
+		reparent(self:reconcile(rbxChild, itemChild), rbx)
+	end
+
+	-- Reconcile any children that were deleted
+	while true do
+		local rbxChild, itemChild = findNextChildPair(rbxChildren, item.Children, visited)
+
+		if not rbxChild then
+			break
+		end
+
+		reparent(self:reconcile(rbxChild, itemChild), rbx)
 	end
 end
 
@@ -137,14 +198,7 @@ function Reconciler:reconcileRoute(route, item, itemRoute)
 
 	rbx = self:reconcile(rbx, item)
 
-	if rbx then
-		-- It's possible that 'rbx' is a service or some other object that we
-		-- can't change the parent of. That's the only reason why Parent would
-		-- fail except for rbx being previously destroyed!
-		pcall(function()
-			rbx.Parent = parent
-		end)
-	end
+	reparent(rbx, parent)
 end
 
 return Reconciler
