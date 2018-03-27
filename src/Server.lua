@@ -34,10 +34,12 @@ function Server:_start()
 					"Found a Rojo dev server, but it's using a different protocol version, and is incompatible." ..
 					"\nMake sure you have the most up-to-date version of both the Rojo plugin and server!" ..
 					"\n\nYour client is version %s, with protocol version %s." ..
+					"\nYour client expects server version %s." ..
 					"\nYour server is version %s, with protocol version %s." ..
 					"\n\nGo to https://github.com/LPGhatguy/rojo for more details."
 				):format(
-					Config.version, Config.protocolVersion,
+					Config.versionString, Config.protocolVersion,
+					Config.expectedServerVersion,
 					response.serverVersion, response.protocolVersion
 				)
 

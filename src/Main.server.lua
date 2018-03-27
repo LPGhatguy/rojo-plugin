@@ -8,7 +8,7 @@ local Config = require(script.Parent.Config)
 local function main()
 	local pluginInstance = Plugin.new()
 
-	local displayedVersion = Config.dev and "DEV" or Config.version
+	local displayedVersion = Config.dev and "DEV" or Config.versionString
 
 	local toolbar = plugin:CreateToolbar("Rojo Plugin " .. displayedVersion)
 
