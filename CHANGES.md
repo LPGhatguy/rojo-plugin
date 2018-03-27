@@ -1,9 +1,13 @@
 # Rojo Studio Plugin Change Log
 
-## Current Master (0.4.0)
+## Current Master
+*No changes*
+
+## 0.4.0
 * Implemented protocol version 1, which shifts more responsibility onto the server
 	* This is a **major breaking** change!
 * Implemented brand new reconciler that's better at matching up instances.
+* Introduce version tracking. When upgrading to new versions of Rojo, the plugin will remind you to upgrade your server! ([#39](https://github.com/LPGhatguy/rojo/issues/39))
 
 ## 0.3.1
 * Fixed minor bug with `.lua` appearing anywhere except the end of a file
