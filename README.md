@@ -7,11 +7,7 @@
 
 <div>&nbsp;</div>
 
-Rojo is a flexible multi-tool designed for creating robust Roblox projects. It's in early development, but is still useful for many projects.
-
-This is the repository containing the Roblox Studio plugin only.
-
-For more details, and to file issues, go to [the main Rojo repository](https://github.com/LPGhatguy/rojo).
+## The rojo-plugin repository has been merged back into [the main Rojo repository](https://github.com/LPGhatguy/rojo). This repository only exists as an archive.
 
 ## Working on Rojo Plugin
 Make sure you have the latest releases of:
