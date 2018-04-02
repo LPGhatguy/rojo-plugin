@@ -132,7 +132,6 @@ function Reconciler:reconcile(rbx, item)
 	-- Item was deleted
 	if not item then
 		if rbx then
-			self._routeMap:removeByRbx(rbx)
 			rbx:Destroy()
 		end
 

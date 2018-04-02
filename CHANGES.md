@@ -1,7 +1,7 @@
 # Rojo Studio Plugin Change Log
 
 ## Current Master
-*No changes*
+* Improved `RouteMap` object tracking; this should fix some cases of duplicated instances being synced into the tree.
 
 ## 0.4.0
 * Implemented protocol version 1, which shifts more responsibility onto the server

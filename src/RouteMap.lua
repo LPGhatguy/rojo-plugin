@@ -14,6 +14,7 @@ function RouteMap.new()
 	local self = {
 		_map = {},
 		_reverseMap = {},
+		_connectionsByRbx = {},
 	}
 
 	setmetatable(self, RouteMap)
@@ -26,6 +27,11 @@ function RouteMap:insert(route, rbx)
 
 	self._map[hashed] = rbx
 	self._reverseMap[rbx] = hashed
+	self._connectionsByRbx[rbx] = rbx.AncestryChanged:Connect(function(_, parent)
+		if parent == nil then
+			self:removeByRbx(rbx)
+		end
+	end)
 end
 
 function RouteMap:get(route)
@@ -39,6 +45,7 @@ function RouteMap:removeByRoute(route)
 	if rbx then
 		self._map[hashedRoute] = nil
 		self._reverseMap[rbx] = nil
+		self._connectionsByRbx[rbx] = nil
 	end
 end
 
@@ -48,6 +55,7 @@ function RouteMap:removeByRbx(rbx)
 	if hashedRoute then
 		self._map[hashedRoute] = nil
 		self._reverseMap[rbx] = nil
+		self._connectionsByRbx[rbx] = nil
 	end
 end
 
@@ -62,6 +70,12 @@ end
 function RouteMap:clear()
 	self._map = {}
 	self._reverseMap = {}
+
+	for object in pairs(self._connectionsByRbx) do
+		object:Disconnect()
+	end
+
+	self._connectionsByRbx = {}
 end
 
 function RouteMap:visualize()
